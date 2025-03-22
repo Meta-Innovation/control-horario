@@ -1,7 +1,5 @@
-"use client"
-
 import { useState, useEffect, useCallback } from "react"
-import { formatElapsedTime, formatElapsedTimeFromSeconds } from "@/lib/date-utils"
+import { formatElapsedTimeFromSeconds } from "@/lib/date-utils"
 
 interface UseTimerOptions {
   autoStart?: boolean

@@ -1,7 +1,7 @@
-import { createClient } from "@/lib/supabase/client"
 import { TimeEntry, TimeEntryType, DailySummary } from "@/types/time-entry"
 import { createTimeEntryClient, getDailyEntriesClient, getDailySummaryClient } from "@/lib/time-entries"
 import { formatDateForDatabase } from "@/lib/date-utils"
+import { supabase } from "./supabase"
 
 class TimeEntryService {
   // Singleton instance
@@ -120,7 +120,6 @@ class TimeEntryService {
     startDate: Date,
     endDate: Date
   ): Promise<Record<string, TimeEntry[]>> {
-    const supabase = createClient()
     
     try {
       const { data: userData } = await supabase.auth.getUser()
