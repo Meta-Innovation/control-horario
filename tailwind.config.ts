@@ -60,7 +60,7 @@ const config = {
         sm: "calc(var(--radius) - 4px)",
       },
       fontFamily: {
-        sans: ["var(--font-sans)", ...fontFamily.sans],
+        DEFAULT: ["var(--poppins)", ...fontFamily.serif],
       },
       keyframes: {
         "accordion-down": {
