@@ -10,11 +10,9 @@ import {
   DropdownMenuSeparator, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu"
-import { useTheme } from "next-themes"
 import { useAuth } from "@/components/providers/auth-provider"
 
 export function Header() {
-  const { setTheme } = useTheme()
   const { signOut } = useAuth()
   const [isSigningOut, setIsSigningOut] = useState(false)
 
@@ -43,11 +41,11 @@ export function Header() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              <DropdownMenuItem onClick={() => setTheme("light")}>
+              <DropdownMenuItem onClick={() => alert("light")}>
                 <Sun className="mr-2 h-4 w-4" />
                 <span>Light</span>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setTheme("dark")}>
+              <DropdownMenuItem onClick={() => alert("dark")}>
                 <Moon className="mr-2 h-4 w-4" />
                 <span>Dark</span>
               </DropdownMenuItem>
