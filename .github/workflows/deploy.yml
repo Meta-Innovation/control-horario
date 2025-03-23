@@ -36,16 +36,31 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Check if secrets exist
+        run: |
+          if [ -z "${{ secrets.VITE_SUPABASE_URL }}" ]; then
+            echo "⚠️ VITE_SUPABASE_URL secret is not set"
+            exit 1
+          fi
+          if [ -z "${{ secrets.VITE_SUPABASE_ANON_KEY }}" ]; then
+            echo "⚠️ VITE_SUPABASE_ANON_KEY secret is not set"
+            exit 1
+          fi
+          echo "✅ All required secrets are available"
+
       - name: Create env file
         run: |
+          touch .env
           echo "VITE_SUPABASE_URL=${{ secrets.VITE_SUPABASE_URL }}" >> .env
           echo "VITE_SUPABASE_ANON_KEY=${{ secrets.VITE_SUPABASE_ANON_KEY }}" >> .env
+          echo "Created .env file successfully"
 
       - name: Build with Vite
-        run: npm run build
-        env:
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        run: |
+          # Ensure env variables are available at build time
+          export VITE_SUPABASE_URL="${{ secrets.VITE_SUPABASE_URL }}"
+          export VITE_SUPABASE_ANON_KEY="${{ secrets.VITE_SUPABASE_ANON_KEY }}"
+          npm run build
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
