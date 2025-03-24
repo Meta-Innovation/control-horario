@@ -37,11 +37,12 @@ jobs:
         run: npm install
 
       - name: Build with Vite
+        run: npm run build
+
+      - name: Create 404.html from index.html
         run: |
-          # Ensure env variables are available at build time
-          export VITE_SUPABASE_URL="${{ secrets.VITE_SUPABASE_URL }}"
-          export VITE_SUPABASE_ANON_KEY="${{ secrets.VITE_SUPABASE_ANON_KEY }}"
-          npm run build
+          cp dist/index.html dist/404.html
+          echo "Created 404.html for SPA route handling"
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
