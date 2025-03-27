@@ -53,6 +53,9 @@ export interface Database {
           end_time: string | null
           breaks_count: number
           breaks_time: number
+          pause_cafe_time: number
+          pause_comida_time: number
+          otros_time: number
           created_at: string
           updated_at: string
         }
@@ -65,6 +68,9 @@ export interface Database {
           end_time?: string | null
           breaks_count?: number
           breaks_time?: number
+          pause_cafe_time?: number
+          pause_comida_time?: number
+          otros_time?: number
           created_at?: string
           updated_at?: string
         }
@@ -77,6 +83,9 @@ export interface Database {
           end_time?: string | null
           breaks_count?: number
           breaks_time?: number
+          pause_cafe_time?: number
+          pause_comida_time?: number
+          otros_time?: number
           created_at?: string
           updated_at?: string
         }
@@ -128,7 +137,7 @@ export interface Database {
       [_ in never]: never
     }
     Enums: {
-      time_entry_type: 'entrada' | 'pausaCafe' | 'pausaComida' | 'otros' | 'salida'
+      time_entry_type: 'entrada' | 'salida' | 'inicioPausaCafe' | 'finPausaCafe' | 'inicioPausaComida' | 'finPausaComida' | 'inicioOtros' | 'finOtros'
     }
     CompositeTypes: {
       [_ in never]: never

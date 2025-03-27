@@ -1,30 +1,40 @@
 import { TimeEntry, TimeEntryType, DailySummary } from '@/types/time-entry'
 import { formatDateForDatabase } from '@/lib/date-utils'
 import { supabase } from './supabase'
+import { ensureDate } from './utils';
 
 // Función para convertir los datos de la respuesta de Supabase a TimeEntry
 const mapTimeEntry = (entry: any): TimeEntry => ({
   id: entry.id,
   userId: entry.user_id,
   type: entry.type as TimeEntryType,
-  timestamp: new Date(entry.timestamp),
+  timestamp: entry.timestamp || new Date().toISOString(),
   notes: entry.notes,
-  createdAt: new Date(entry.created_at),
 })
 
 // Función para convertir los datos de la respuesta de Supabase a DailySummary
-const mapDailySummary = (summary: any): DailySummary => ({
-  id: summary.id,
-  userId: summary.user_id,
-  date: new Date(summary.date),
-  totalTime: summary.total_time,
-  startTime: summary.start_time ? new Date(summary.start_time) : null,
-  endTime: summary.end_time ? new Date(summary.end_time) : null,
-  breaksCount: summary.breaks_count,
-  breaksTime: summary.breaks_time,
-  createdAt: new Date(summary.created_at),
-  updatedAt: new Date(summary.updated_at),
-})
+const mapDailySummary = (summary: any): DailySummary => {
+  // Asegurarse de que todos los campos necesarios existen
+  if (!summary) return null as any;
+  
+  return {
+    id: summary.id,
+    userId: summary.user_id,
+    date: ensureDate(summary.date),
+    totalTime: summary.total_time || 0,
+    startTime: ensureDate(summary.start_time),
+    endTime: ensureDate(summary.end_time),
+    breaksCount: summary.breaks_count || 0,
+    breaksTime: summary.breaks_time || 0,
+    // Estos campos no están en la interfaz DailySummary pero los guardamos como datos adicionales
+    // para evitar errores de typescript, no los incluimos en el objeto retornado
+    // pauseCafeTime: summary.pause_cafe_time || 0,
+    // pausaComidaTime: summary.pause_comida_time || 0,
+    // otrosTime: summary.otros_time || 0,
+    createdAt: ensureDate(summary.created_at),
+    updatedAt: ensureDate(summary.updated_at),
+  };
+};
 
 // Crear una entrada de tiempo en el lado del servidor
 export async function createTimeEntryServer(
@@ -108,7 +118,7 @@ export async function getDailyEntriesServer(
     return []
   }
 
-  return data.map(mapTimeEntry)
+  return (data || []).map(mapTimeEntry)
 }
 
 // Obtener las entradas de tiempo de un día específico en el lado del cliente
@@ -156,12 +166,12 @@ export async function getDailySummaryServer(
     .eq('date', dateStr)
     .single()
 
-  if (error) {
+  if (error && error.code !== 'PGRST116') { // No single result error
     console.error('Error getting daily summary:', error)
     return null
   }
 
-  return mapDailySummary(data)
+  return data ? mapDailySummary(data) : null
 }
 
 // Obtener el resumen diario de un día específico en el lado del cliente

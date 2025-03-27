@@ -1,39 +1,103 @@
-import { useEffect } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { TimeEntryForm } from "@/components/time-entry/time-entry-form"
-import { TimeDisplay } from "@/components/time-entry/time-display"
-import { EntryHistoryList } from "@/components/time-entry/entry-history-list"
-import { TimeStats } from "@/components/time-entry/time-stats"
-import { useTimeEntries } from "@/hooks/use-time-entries"
-import { useAuth } from "@/components/providers/auth-provider"
-import { TimeEntryType } from "@/types/time-entry"
+import { useEffect } from "react";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import { TimeEntryForm } from "@/components/time-entry/time-entry-form";
+import { TimeDisplay } from "@/components/time-entry/time-display";
+import { EntryHistoryList } from "@/components/time-entry/entry-history-list";
+import { TimeStats } from "@/components/time-entry/time-stats";
+import { useTimeEntries } from "@/hooks/use-time-entries";
+import { useAuth } from "@/components/providers/auth-provider";
+import { TimeEntryType } from "@/types/time-entry";
+import { ensureDate } from "@/lib/utils";
 
 export function TimeEntryPanel() {
-  const { user } = useAuth()
-  const { 
-    entries, 
-    isLoading, 
+  const { user } = useAuth();
+  const {
+    entries,
+    isLoading,
     activeEntry,
     todaySummary,
     addEntry,
-    refreshEntries
-  } = useTimeEntries()
+    refreshEntries,
+  } = useTimeEntries();
 
   // Actualizar entradas al cargar y cuando cambie el usuario
   useEffect(() => {
     if (user) {
-      refreshEntries()
+      refreshEntries();
     }
-  }, [user, refreshEntries])
+  }, [user, refreshEntries]);
 
-  // Determinar si ciertos botones deben estar deshabilitados
-  const hasActiveWorkday = entries.some(entry => entry.type === "entrada") && !entries.some(entry => entry.type === "salida")
+  // Determinar si ciertos botones deben estar deshabilitados y pausas activas
+  const hasActiveWorkday =
+    entries.some(entry => entry.type === "entrada") &&
+    !entries.some(entry => entry.type === "salida");
 
-  const handleEntrySubmit = async (type: TimeEntryType, notes?: string) => {
-    if (!user) return
-    await addEntry(type, notes)
-  }
+  // Detectar pausas activas
+  const hasActiveCoffeePause =
+    entries.some(
+      entry => entry.type === "inicioPausaCafe"
+    ) &&
+    !entries.some(
+      entry =>
+        entry.type === "finPausaCafe" &&
+        ensureDate(entry.timestamp) >
+          ensureDate(
+            entries.find(e => e.type === "inicioPausaCafe")
+              ?.timestamp || ""
+          )
+    );
+
+  const hasActiveLunchPause =
+    entries.some(
+      entry => entry.type === "inicioPausaComida"
+    ) &&
+    !entries.some(
+      entry =>
+        entry.type === "finPausaComida" &&
+        ensureDate(entry.timestamp) >
+          ensureDate(
+            entries.find(
+              e => e.type === "inicioPausaComida"
+            )?.timestamp || ""
+          )
+    );
+
+  const hasActiveOtherPause =
+    entries.some(entry => entry.type === "inicioOtros") &&
+    !entries.some(
+      entry =>
+        entry.type === "finOtros" &&
+        ensureDate(entry.timestamp) >
+          ensureDate(
+            entries.find(e => e.type === "inicioOtros")
+              ?.timestamp || ""
+          )
+    );
+
+  const activePauses = {
+    pausaCafe: hasActiveCoffeePause,
+    pausaComida: hasActiveLunchPause,
+    otros: hasActiveOtherPause,
+  };
+
+  const handleEntrySubmit = async (
+    type: TimeEntryType,
+    notes?: string
+  ) => {
+    if (!user) return;
+    await addEntry(type, notes);
+  };
 
   return (
     <div className="space-y-8">
@@ -42,17 +106,24 @@ export function TimeEntryPanel() {
           <CardTitle>Registro de Horario</CardTitle>
         </CardHeader>
         <CardContent>
-          <TimeEntryForm 
-            onSubmit={handleEntrySubmit} 
+          <TimeEntryForm
+            onSubmit={handleEntrySubmit}
             isLoading={isLoading}
             hasActiveWorkday={hasActiveWorkday}
+            activePauses={activePauses}
           />
-          
+
           {activeEntry && (
             <div className="mt-6">
-              <TimeDisplay 
-                startTime={activeEntry.timestamp} 
-                label={`Tiempo desde ${activeEntry.type === "entrada" ? "entrada" : "última pausa"}:`} 
+              <TimeDisplay
+                startTime={ensureDate(
+                  activeEntry.timestamp
+                )}
+                label={`Tiempo desde ${
+                  activeEntry.type === "entrada"
+                    ? "entrada"
+                    : "última pausa"
+                }:`}
               />
             </div>
           )}
@@ -61,8 +132,12 @@ export function TimeEntryPanel() {
 
       <Tabs defaultValue="history" className="w-full">
         <TabsList className="grid grid-cols-2">
-          <TabsTrigger value="history">Historial de Hoy</TabsTrigger>
-          <TabsTrigger value="stats">Estadísticas</TabsTrigger>
+          <TabsTrigger value="history">
+            Historial de Hoy
+          </TabsTrigger>
+          <TabsTrigger value="stats">
+            Estadísticas
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="history" className="mt-4">
           <Card>
@@ -86,7 +161,7 @@ export function TimeEntryPanel() {
         </TabsContent>
       </Tabs>
     </div>
-  )
+  );
 }
 
 // Generated by Copilot

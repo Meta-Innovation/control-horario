@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { cn } from "@/lib/utils"
+import { cn, ensureDate } from "@/lib/utils"
 import { useHistoricalTimeEntries } from "@/hooks/use-historical-time-entries"
 import { TimeHistoryList } from "@/components/time-entry/time-history-list"
 
@@ -130,7 +130,7 @@ export function TimeHistoryView() {
                     key={summary.date.toISOString()} 
                     date={summary.date}
                     entries={entries.filter(entry => 
-                      entry.timestamp.toDateString() === summary.date.toDateString()
+                      ensureDate(entry.timestamp).toDateString() === summary.date.toDateString()
                     )}
                     summary={summary}
                   />

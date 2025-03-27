@@ -1,5 +1,3 @@
-"use client"
-
 import { useState, useCallback, useEffect } from "react"
 import { 
   startOfDay, endOfDay, 
@@ -13,28 +11,29 @@ import { TimeEntry, DailySummary } from "@/types/time-entry"
 import { useAuth } from "@/components/providers/auth-provider"
 import { formatDateForDatabase } from "@/lib/date-utils"
 import { supabase } from "@/lib/supabase"
+import { ensureDate } from "@/lib/utils"
 
 // Mapeo para convertir los datos de Supabase a objetos de la aplicación
 const mapTimeEntry = (entry: any): TimeEntry => ({
   id: entry.id,
   userId: entry.user_id,
   type: entry.type,
-  timestamp: new Date(entry.timestamp),
+  timestamp: entry.timestamp instanceof Date ? entry.timestamp : new Date(entry.timestamp),
   notes: entry.notes,
-  createdAt: new Date(entry.created_at),
+  workdayId: entry.workday_id || entry.workdayId
 })
 
 const mapDailySummary = (summary: any): DailySummary => ({
   id: summary.id,
   userId: summary.user_id,
-  date: new Date(summary.date),
+  date: summary.date instanceof Date ? summary.date : new Date(summary.date),
   totalTime: summary.total_time,
-  startTime: summary.start_time ? new Date(summary.start_time) : null,
-  endTime: summary.end_time ? new Date(summary.end_time) : null,
+  startTime: summary.start_time ? ensureDate(summary.start_time) : null,
+  endTime: summary.end_time ? ensureDate(summary.end_time) : null,
   breaksCount: summary.breaks_count,
   breaksTime: summary.breaks_time,
-  createdAt: new Date(summary.created_at),
-  updatedAt: new Date(summary.updated_at),
+  createdAt: ensureDate(summary.created_at),
+  updatedAt: ensureDate(summary.updated_at),
 })
 
 export function useHistoricalTimeEntries(
@@ -49,20 +48,23 @@ export function useHistoricalTimeEntries(
   
   // Función para obtener el rango de fechas según el modo de visualización
   const getDateRange = useCallback(() => {
+    // Asegurarnos que selectedDate es un objeto Date
+    const date = ensureDate(selectedDate);
+    
     if (viewMode === "day") {
       return {
-        from: startOfDay(selectedDate),
-        to: endOfDay(selectedDate)
+        from: startOfDay(date),
+        to: endOfDay(date)
       }
     } else if (viewMode === "week") {
       return {
-        from: startOfWeek(selectedDate, { locale: es }),
-        to: endOfWeek(selectedDate, { locale: es })
+        from: startOfWeek(date, { locale: es }),
+        to: endOfWeek(date, { locale: es })
       }
     } else {
       return {
-        from: startOfMonth(selectedDate),
-        to: endOfMonth(selectedDate)
+        from: startOfMonth(date),
+        to: endOfMonth(date)
       }
     }
   }, [selectedDate, viewMode])
@@ -103,13 +105,14 @@ export function useHistoricalTimeEntries(
       // crear estructuras vacías para esos días
       const allDays = eachDayOfInterval({ start: from, end: to })
       
-      const mappedSummaries = summariesData.map(mapDailySummary)
+      const mappedSummaries = summariesData?.map(mapDailySummary) || []
+      const mappedEntries = entriesData?.map(mapTimeEntry) || []
       
       // Asegurar que tenemos un resumen para cada día en el rango
       const completeSummaries = allDays.map(day => {
         // Buscar si hay un resumen existente para este día
         const existingSummary = mappedSummaries.find(summary => 
-          isSameDay(summary.date, day)
+          isSameDay(ensureDate(summary.date), day)
         )
         
         if (existingSummary) {
@@ -117,8 +120,8 @@ export function useHistoricalTimeEntries(
         }
         
         // Si no hay entradas para este día, no incluir un resumen
-        const hasEntriesForDay = entriesData.some(entry => 
-          isSameDay(new Date(entry.timestamp), day)
+        const hasEntriesForDay = mappedEntries.some(entry => 
+          isSameDay(ensureDate(entry.timestamp), day)
         )
         
         if (!hasEntriesForDay) {
@@ -140,7 +143,7 @@ export function useHistoricalTimeEntries(
         }
       }).filter(Boolean) as DailySummary[]
       
-      setEntries(entriesData.map(mapTimeEntry))
+      setEntries(mappedEntries)
       setSummaries(completeSummaries)
     } catch (err) {
       console.error("Error fetching historical data:", err)

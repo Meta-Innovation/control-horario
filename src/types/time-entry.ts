@@ -1,12 +1,22 @@
-export type TimeEntryType = 'entrada' | 'pausaCafe' | 'pausaComida' | 'otros' | 'salida';
+export type TimeEntryType = 
+  "entrada" 
+  | "salida" 
+  | "inicioPausaCafe" 
+  | "finPausaCafe" 
+  | "inicioPausaComida" 
+  | "finPausaComida" 
+  | "inicioOtros" 
+  | "finOtros";
+
+export type PauseType = "pausaCafe" | "pausaComida" | "otros";
 
 export interface TimeEntry {
   id: string;
   userId: string;
   type: TimeEntryType;
-  timestamp: Date;
-  notes?: string | null;
-  createdAt: Date;
+  timestamp: string;
+  notes?: string;
+  workdayId?: string;
 }
 
 export interface DailyTimeRecord {
